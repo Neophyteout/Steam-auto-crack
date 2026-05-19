@@ -16,7 +16,7 @@ Latest Version 3.0 Using .Net 10.0.
 [Official Telegram](https://t.me/SteamAutoCrack)
 
 * Github: <https://github.com/SteamAutoCracks/Steam-auto-crack>
-* Gitlab: <https://gitlab.com/oureveryday/Steam-auto-crack>
+* Gitlab: <https://gitlab.com/steamautocracks/Steam-auto-crack>
 
 * If you like this project, you can just give this project a star or donate me. (Donation methods are at the bottom)
 

@@ -16,7 +16,7 @@
 [官方 Telegram](https://t.me/SteamAutoCrack)
 
 * Github: <https://github.com/SteamAutoCracks/Steam-auto-crack>
-* Gitlab: <https://gitlab.com/oureveryday/Steam-auto-crack>
+* Gitlab: <https://gitlab.com/steamautocracks/Steam-auto-crack>
 
 * 如果你喜欢这个项目，你可以给这个项目一个星星或者捐赠我。（捐赠方式在底部）
 
