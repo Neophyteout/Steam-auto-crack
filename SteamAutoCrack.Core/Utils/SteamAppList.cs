@@ -30,7 +30,9 @@ public class SteamApp
 public class AppList
 {
     [JsonPropertyName("apps")] public List<SteamApp>? Apps { get; set; }
-    [JsonPropertyName("have_more_results")] public bool HaveMoreResults { get; set; }
+
+    [JsonPropertyName("have_more_results")]
+    public bool HaveMoreResults { get; set; }
 
     [JsonPropertyName("last_appid")] public uint LastAppId { get; set; }
 }
@@ -73,8 +75,9 @@ public class SteamAppList
             await db.CreateTableAsync<SteamApp>().ConfigureAwait(false);
             var count = await db.Table<SteamApp>().CountAsync().ConfigureAwait(false);
 
-            bool dbExistsWithData = File.Exists(Database) && count > 0;
-            bool needsUpdate = DateTime.Now.Subtract(File.GetLastWriteTimeUtc(Database)).TotalDays >= 7 || count == 0 || forceupdate;
+            var dbExistsWithData = File.Exists(Database) && count > 0;
+            var needsUpdate = DateTime.Now.Subtract(File.GetLastWriteTimeUtc(Database)).TotalDays >= 7 || count == 0 ||
+                              forceupdate;
             if (bInited && !needsUpdate && !forceupdate)
             {
                 _log.Debug("Already initialized Steam App list.");
@@ -90,11 +93,10 @@ public class SteamAppList
             }
 
             if (needsUpdate)
-            {
                 try
                 {
                     _log.Information("Updating Steam App list...");
-                    if (Config.Config.EMUGameInfoConfigs.SteamWebAPIKey == String.Empty)
+                    if (Config.Config.EMUGameInfoConfigs.SteamWebAPIKey == string.Empty)
                     {
                         _log.Warning("Steam Web API Key not set. Please set it to update Steam App List.");
                         if (!dbExistsWithData) bDisposed = true;
@@ -103,7 +105,7 @@ public class SteamAppList
 
                     using var client = new HttpClient();
                     uint lastAppId = 0;
-                    bool haveMore = false;
+                    var haveMore = false;
                     var allApps = new List<SteamApp>();
                     var requestKey = Config.Config.EMUGameInfoConfigs.SteamWebAPIKey;
 
@@ -115,7 +117,7 @@ public class SteamAppList
                         _log.Debug("Requesting Steam App list batch with last_appid={lastAppId}", lastAppId);
 
                         var attempt = 0;
-                        bool batchSuccess = false;
+                        var batchSuccess = false;
                         while (attempt < maxRetries && !batchSuccess)
                         {
                             attempt++;
@@ -139,7 +141,8 @@ public class SteamAppList
                             }
                             catch (Exception ex)
                             {
-                                _log.Warning(ex, "Failed to fetch Steam App batch (attempt {attempt}/{maxRetries}).", attempt, maxRetries);
+                                _log.Warning(ex, "Failed to fetch Steam App batch (attempt {attempt}/{maxRetries}).",
+                                    attempt, maxRetries);
                                 if (attempt < maxRetries)
                                 {
                                     var delayMs = (int)(1000 * Math.Pow(2, attempt - 1));
@@ -153,7 +156,6 @@ public class SteamAppList
                                 }
                             }
                         }
-
                     } while (haveMore);
 
                     if (allApps.Count > 0)
@@ -170,11 +172,8 @@ public class SteamAppList
                 {
                     _log.Error(ex, "Failed to initialize Steam App list, Retrying...");
                 }
-            }
             else
-            {
                 _log.Information("Applist already updated to latest version.");
-            }
 
             if (!dbExistsWithData)
             {
@@ -184,19 +183,17 @@ public class SteamAppList
 
             var updatedCount = await db.Table<SteamApp>().CountAsync().ConfigureAwait(false);
             _log.Information("Initialized Steam App list, App Count: {count}", updatedCount);
-            return;
         }
         catch (Exception ex)
         {
             _log.Error(ex, "Failed to initialize Steam App list.");
             bDisposed = true;
-            return;
         }
     }
 
     public static async Task WaitForReady()
     {
-        if (bDisposed == true)
+        if (bDisposed)
         {
             _log.Error("Not initialized Steam App list.");
             throw new Exception("Not initialized Steam App list.");
@@ -212,14 +209,15 @@ public class SteamAppList
         {
             var opts = new JsonSerializerOptions
             {
-                PropertyNameCaseInsensitive = true,
+                PropertyNameCaseInsensitive = true
             };
             return JsonSerializer.Deserialize<StoreSteamAppsV1>(json, opts);
         }
         catch (Exception ex)
         {
             _log.Error(ex, "Failed to deserialize Steam App list JSON.");
-            return new StoreSteamAppsV1 { AppList = new AppList { Apps = new List<SteamApp>(), HaveMoreResults = false, LastAppId = 0 } };
+            return new StoreSteamAppsV1
+                { AppList = new AppList { Apps = new List<SteamApp>(), HaveMoreResults = false, LastAppId = 0 } };
         }
     }
 
@@ -276,13 +274,11 @@ public class SteamAppList
         var app = await db!.Table<SteamApp>().FirstOrDefaultAsync(x => x.AppId.Equals(appid)).ConfigureAwait(false);
         if (app != null) _log?.Debug($"Successfully got app {app}");
         else
-        {
-            return new SteamApp()
+            return new SteamApp
             {
                 AppId = appid,
-                Name = null,
+                Name = null
             };
-        }
         return app;
     }
 }

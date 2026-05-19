@@ -26,10 +26,7 @@ public class EnumDescriptionConverter : IValueConverter
             var fieldInfo = enumObj.GetType().GetField(enumObj.ToString());
             var attribArray = fieldInfo?.GetCustomAttributes(false);
 
-            if (attribArray == null || attribArray.Length == 0)
-            {
-                return enumObj.ToString();
-            }
+            if (attribArray == null || attribArray.Length == 0) return enumObj.ToString();
 
             DescriptionAttribute? attrib = null;
 
@@ -42,10 +39,9 @@ public class EnumDescriptionConverter : IValueConverter
 
             return enumObj.ToString();
         }
-        catch (Exception e)
+        catch
         {
             return string.Empty;
         }
-        
     }
 }

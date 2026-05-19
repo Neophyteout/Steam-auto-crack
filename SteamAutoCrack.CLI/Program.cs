@@ -24,7 +24,7 @@ internal class Program
             .CreateLogger();
         levelSwitch.MinimumLevel = LogEventLevel.Information;
         var _log = Log.ForContext<Program>();
-        Option<bool> DebugOption = new Option<bool>(
+        var DebugOption = new Option<bool>(
             "--debug",
             "Enable Debug Log.");
 
@@ -53,17 +53,18 @@ internal class Program
             AppIDOption
         };
 
-        crackCommand.SetAction(async (parseResult) =>
+        crackCommand.SetAction(async parseResult =>
         {
             if (parseResult.GetValue(DebugOption)) SetDebugLogLevel(levelSwitch);
-            await Process(parseResult.GetValue(pathArgument), parseResult.GetValue(ConfigOption), parseResult.GetValue(AppIDOption));
+            await Process(parseResult.GetValue(pathArgument), parseResult.GetValue(ConfigOption),
+                parseResult.GetValue(AppIDOption));
         });
 
         #endregion
 
         #region downloademu
 
-        Option<bool> ForceDownloadOption = new Option<bool>(
+        var ForceDownloadOption = new Option<bool>(
             "--force",
             "Force (re)download."
         );
@@ -73,7 +74,7 @@ internal class Program
             ForceDownloadOption
         };
 
-        downloademuCommand.SetAction(async (parseResult) =>
+        downloademuCommand.SetAction(async parseResult =>
         {
             try
             {
@@ -95,7 +96,7 @@ internal class Program
         #region updateapplist
 
         var updateapplistCommand = new Command("updateapplist", "Force Update Steam App List.");
-        updateapplistCommand.SetAction(async (parseResult) =>
+        updateapplistCommand.SetAction(async parseResult =>
         {
             try
             {
@@ -114,7 +115,7 @@ internal class Program
 
         #region createconfig
 
-        Option<FileInfo?> configpathOption = new Option<FileInfo?>(
+        var configpathOption = new Option<FileInfo?>(
             "--path",
             "Changes default config path.");
         var createconfigCommand = new Command("createconfig", "Create Default Config File.")
@@ -122,7 +123,7 @@ internal class Program
             configpathOption
         };
 
-        createconfigCommand.SetAction(async (parseResult) =>
+        createconfigCommand.SetAction(async parseResult =>
         {
             try
             {

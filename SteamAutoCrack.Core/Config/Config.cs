@@ -12,6 +12,8 @@ namespace SteamAutoCrack.Core.Config;
 
 public class Config
 {
+    public delegate void LanguageChangedHandler(Languages newLanguage);
+
     /// <summary>
     ///     Program Language.
     /// </summary>
@@ -22,6 +24,10 @@ public class Config
     }
 
     private static readonly ILogger _log = Log.ForContext<Config>();
+
+    private static bool _SaveCrackConfig = CheckConfigFile();
+    private static bool _EnableDebugLog;
+    public static LoggingLevelSwitch loggingLevelSwitch = new();
 
     /// <summary>
     ///     Temp file path.
@@ -91,7 +97,7 @@ public class Config
     }
 
     /// <summary>
-    ///    Program language.
+    ///     Program language.
     /// </summary>
     public static Languages Language
     {
@@ -111,9 +117,6 @@ public class Config
     /// </summary>
     public static bool LogToFile { get; set; }
 
-    public delegate void LanguageChangedHandler(Languages newLanguage);
-    public static event LanguageChangedHandler? OnLanguageChanged;
-
     private static Languages _language { get; set; } = GetDefaultLanguage();
 
     public static EMUApplyConfigs EMUApplyConfigs { get; set; } = new();
@@ -122,10 +125,7 @@ public class Config
     public static EMUGameInfoConfigs EMUGameInfoConfigs { get; set; } = new();
     public static GenCrackOnlyConfigs GenCrackOnlyConfigs { get; set; } = new();
     public static ProcessConfigs ProcessConfigs { get; set; } = new();
-
-    private static bool _SaveCrackConfig = CheckConfigFile();
-    private static bool _EnableDebugLog;
-    public static LoggingLevelSwitch loggingLevelSwitch = new();
+    public static event LanguageChangedHandler? OnLanguageChanged;
 
     private static bool CheckConfigFile()
     {
@@ -359,7 +359,7 @@ public class EMUConfigs
     public bool UseCustomIP { get; set; } = EMUConfig.DefaultConfig.UseCustomIP;
 
     /// <summary>
-    /// Encrypted Application Ticket.
+    ///     Encrypted Application Ticket.
     /// </summary>
     public string Ticket { get; set; } = EMUConfig.DefaultConfig.Ticket;
 
@@ -417,53 +417,53 @@ public class SteamStubUnpackerConfigs
     /// <summary>
     ///     Keeps the .bind section in the unpacked file.
     /// </summary>
-    public bool KeepBind { get; set; } = SteamStubUnpackerConfig.DefaultConfig.KeepBind;
+    public bool KeepBind { get; set; } = DefaultConfig.KeepBind;
 
     /// <summary>
     ///     Keeps the DOS stub in the unpacked file.
     /// </summary>
-    public bool KeepStub { get; set; } = SteamStubUnpackerConfig.DefaultConfig.KeepStub;
+    public bool KeepStub { get; set; } = DefaultConfig.KeepStub;
 
     /// <summary>
     ///     Realigns the unpacked file sections.
     /// </summary>
-    public bool Realign { get; set; } = SteamStubUnpackerConfig.DefaultConfig.Realign;
+    public bool Realign { get; set; } = DefaultConfig.Realign;
 
     /// <summary>
     ///     Recalculates the unpacked file checksum.
     /// </summary>
-    public bool ReCalcChecksum { get; set; } = SteamStubUnpackerConfig.DefaultConfig.ReCalcChecksum;
+    public bool ReCalcChecksum { get; set; } = DefaultConfig.ReCalcChecksum;
 
     /// <summary>
     ///     Use Experimental Features.
     /// </summary>
-    public bool UseExperimentalFeatures { get; set; } = SteamStubUnpackerConfig.DefaultConfig.UseExperimentalFeatures;
+    public bool UseExperimentalFeatures { get; set; } = DefaultConfig.UseExperimentalFeatures;
 
     /// <summary>
     ///     SteamAPICheckBypass Mode
     /// </summary>
-    public SteamAPICheckBypassModes SteamAPICheckBypassMode { get; set; } = SteamStubUnpackerConfig.DefaultConfig.SteamAPICheckBypassMode;
+    public SteamAPICheckBypassModes SteamAPICheckBypassMode { get; set; } = DefaultConfig.SteamAPICheckBypassMode;
 
     /// <summary>
     ///     DLL hijacking name for SteamAPICheckBypass
     /// </summary>
-    public SteamAPICheckBypassDLLs SteamAPICheckBypassDLL { get; set; } = SteamStubUnpackerConfig.DefaultConfig.SteamAPICheckBypassDLL;
+    public SteamAPICheckBypassDLLs SteamAPICheckBypassDLL { get; set; } = DefaultConfig.SteamAPICheckBypassDLL;
 
     /// <summary>
     ///     SteamAPI Check Bypass Nth Time Setting
     /// </summary>
-    public List<UInt64> SteamAPICheckBypassNthTime { get; set; } = SteamStubUnpackerConfig.DefaultConfig.SteamAPICheckBypassNthTime;
+    public List<ulong> SteamAPICheckBypassNthTime { get; set; } = DefaultConfig.SteamAPICheckBypassNthTime;
 
     public void ResettoDefault()
     {
-        KeepBind = SteamStubUnpackerConfig.DefaultConfig.KeepBind;
-        KeepStub = SteamStubUnpackerConfig.DefaultConfig.KeepStub;
-        Realign = SteamStubUnpackerConfig.DefaultConfig.Realign;
-        ReCalcChecksum = SteamStubUnpackerConfig.DefaultConfig.ReCalcChecksum;
-        UseExperimentalFeatures = SteamStubUnpackerConfig.DefaultConfig.UseExperimentalFeatures;
-        SteamAPICheckBypassMode = SteamStubUnpackerConfig.DefaultConfig.SteamAPICheckBypassMode;
-        SteamAPICheckBypassDLL = SteamStubUnpackerConfig.DefaultConfig.SteamAPICheckBypassDLL;
-        SteamAPICheckBypassNthTime = SteamStubUnpackerConfig.DefaultConfig.SteamAPICheckBypassNthTime;
+        KeepBind = DefaultConfig.KeepBind;
+        KeepStub = DefaultConfig.KeepStub;
+        Realign = DefaultConfig.Realign;
+        ReCalcChecksum = DefaultConfig.ReCalcChecksum;
+        UseExperimentalFeatures = DefaultConfig.UseExperimentalFeatures;
+        SteamAPICheckBypassMode = DefaultConfig.SteamAPICheckBypassMode;
+        SteamAPICheckBypassDLL = DefaultConfig.SteamAPICheckBypassDLL;
+        SteamAPICheckBypassNthTime = DefaultConfig.SteamAPICheckBypassNthTime;
     }
 
     public SteamStubUnpackerConfig GetSteamStubUnpackerConfig()
@@ -484,7 +484,8 @@ public class SteamStubUnpackerConfigs
 
 public class EMUGameInfoConfigs
 {
-    public EMUGameInfoConfig.GeneratorGameInfoAPI GameInfoAPI { get; set; } = EMUGameInfoConfig.DefaultConfig.GameInfoAPI;
+    public EMUGameInfoConfig.GeneratorGameInfoAPI GameInfoAPI { get; set; } =
+        EMUGameInfoConfig.DefaultConfig.GameInfoAPI;
 
     /// <summary>
     ///     Required when using Steam official Web API.

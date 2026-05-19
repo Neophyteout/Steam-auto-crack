@@ -1,6 +1,9 @@
 ﻿using System.Text.Json;
 using Serilog;
-using SharpSevenZip;
+using SharpCompress.Archives;
+using SharpCompress.Archives.SevenZip;
+using SharpCompress.Common;
+using SharpCompress.Readers;
 
 namespace SteamAutoCrack.Core.Utils
 {
@@ -10,19 +13,17 @@ namespace SteamAutoCrack.Core.Utils
         private const string GoldbergVersionUrl = "https://api.github.com/repos/Detanup01/gbe_fork/commits";
         public static bool Downloading;
         private readonly ILogger _log;
-        private bool bGotlatestcommit;
-        private bool bInited;
         private readonly CancellationTokenSource cancellationTokenSource = new();
-        private string currentcommit = string.Empty;
-        private string latestcommit = string.Empty;
 
         private readonly List<string> goldberguselessFolders = new()
         {
-            "steamclient_experimental",
-            "tools",
-            "release",
-            "regular"
+            "release"
         };
+
+        private bool bGotlatestcommit;
+        private bool bInited;
+        private string currentcommit = string.Empty;
+        private string latestcommit = string.Empty;
 
         public EMUUpdater()
         {
@@ -64,7 +65,7 @@ namespace SteamAutoCrack.Core.Utils
                 if (!bGotlatestcommit) throw new Exception("Failed to get latest commit.");
 
                 _log.Information($"Goldberg commit: Current: {currentcommit}; Latest: {latestcommit}");
-                if (force)
+                if (force || !currentcommit.Equals(latestcommit))
                 {
                     await StartDownload().ConfigureAwait(false);
                     await Extract(Path.Combine(Config.Config.TempPath, "Goldberg.7z")).ConfigureAwait(false);
@@ -73,17 +74,7 @@ namespace SteamAutoCrack.Core.Utils
                 }
                 else
                 {
-                    if (currentcommit.Equals(latestcommit))
-                    {
-                        _log.Information("Goldberg emulator already updated to latest version.");
-                    }
-                    else
-                    {
-                        await StartDownload().ConfigureAwait(false);
-                        await Extract(Path.Combine(Config.Config.TempPath, "Goldberg.7z")).ConfigureAwait(false);
-                        await Clean(Config.Config.GoldbergPath);
-                        File.WriteAllText(Path.Combine(Config.Config.GoldbergPath, "commit_id"), latestcommit);
-                    }
+                    _log.Information("Goldberg emulator already updated to latest version.");
                 }
 
                 _log.Information("Update Success.");
@@ -134,7 +125,7 @@ namespace SteamAutoCrack.Core.Utils
                 _log.Error("Failed to get latest Goldberg Steam emulator version, error: " + response.StatusCode);
             }
 
-            if ( downloadUrl == null || downloadUrl == string.Empty) throw new Exception("Failed to get download url.");
+            if (downloadUrl == null || downloadUrl == string.Empty) throw new Exception("Failed to get download url.");
 
             _log.Debug("Downloading URL: {downloadUrl}", downloadUrl);
             await using var fileStream = File.OpenWrite(Path.Combine(Config.Config.TempPath, "Goldberg.7z"));
@@ -161,34 +152,14 @@ namespace SteamAutoCrack.Core.Utils
                 Directory.Delete(Config.Config.GoldbergPath, true);
                 Directory.CreateDirectory(Config.Config.GoldbergPath);
 
-                var dllPaths = AppContext.GetData("NATIVE_DLL_SEARCH_DIRECTORIES")?.ToString();
-
-                var pathsList = new List<string>(dllPaths?.Split(';') ?? Array.Empty<string>());
-                var dllPath = "";
-
-                foreach (var path in pathsList)
-                {
-                    var fullPath = Path.Combine(path, "x86", "7z.dll");
-                    if (File.Exists(fullPath))
-                    {
-                        dllPath = fullPath;
-                        break;
-                    }
-                }
-
-                if (string.IsNullOrEmpty(dllPath)) throw new FileNotFoundException("7z.dll not found in .Net temp path.");
-
-                SharpSevenZipBase.SetLibraryPath(dllPath);
-
-                using (var archive = new SharpSevenZipExtractor(File.Open(archivePath, FileMode.Open)))
+                using (var archive = SevenZipArchive.OpenArchive(archivePath, ReaderOptions.ForFilePath))
                 {
                     try
                     {
                         Directory.CreateDirectory(Config.Config.GoldbergPath);
-                        archive.ExtractArchive(Config.Config.GoldbergPath);
+                        archive.WriteToDirectory(Config.Config.GoldbergPath,
+                            new ExtractionOptions { ExtractFullPath = true, Overwrite = true });
                         CopyDirectory(new DirectoryInfo(Path.Combine(Config.Config.GoldbergPath, "release")),
-                            new DirectoryInfo(Config.Config.GoldbergPath));
-                        CopyDirectory(new DirectoryInfo(Path.Combine(Config.Config.GoldbergPath, "regular")),
                             new DirectoryInfo(Config.Config.GoldbergPath));
                     }
                     catch (Exception ex)
@@ -208,7 +179,8 @@ namespace SteamAutoCrack.Core.Utils
                 try
                 {
                     _log.Debug("Start Clean Goldberg emulator Files...");
-                    foreach (var path in goldberguselessFolders) Directory.Delete(Path.Combine(goldbergPath, path), true);
+                    foreach (var path in goldberguselessFolders)
+                        Directory.Delete(Path.Combine(goldbergPath, path), true);
                     _log.Information("Clean was successful.");
                 }
                 catch (Exception ex)

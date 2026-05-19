@@ -11,10 +11,12 @@ public class Restore : IRestore
 {
     private readonly ILogger _log;
 
-    public Restore()
+    private readonly List<string> BypassesToDelete = new()
     {
-        _log = Log.ForContext<Restore>();
-    }
+        "version.dll",
+        "winmm.dll",
+        "winhttp.dll"
+    };
 
     private readonly List<string> FilesToDelete = new()
     {
@@ -23,12 +25,10 @@ public class Restore : IRestore
         "SteamAPICheckBypass.json"
     };
 
-    private readonly List<string> BypassesToDelete = new()
+    public Restore()
     {
-        "version.dll",
-        "winmm.dll",
-        "winhttp.dll"
-    };
+        _log = Log.ForContext<Restore>();
+    }
 
     public async Task<bool> RestoreFile(string path)
     {
@@ -77,10 +77,10 @@ public class Restore : IRestore
                     try
                     {
                         _log.Debug("Restoring \"{path}\"...", pathtorestore);
-                        File.Delete(Path.Combine(Path.GetDirectoryName(pathtorestore) ?? String.Empty,
+                        File.Delete(Path.Combine(Path.GetDirectoryName(pathtorestore) ?? string.Empty,
                             Path.GetFileNameWithoutExtension(pathtorestore)));
                         File.Move(pathtorestore,
-                            Path.Combine(Path.GetDirectoryName(pathtorestore) ?? String.Empty,
+                            Path.Combine(Path.GetDirectoryName(pathtorestore) ?? string.Empty,
                                 Path.GetFileNameWithoutExtension(pathtorestore)));
                     }
                     catch (Exception ex)

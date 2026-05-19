@@ -59,11 +59,6 @@ public class GenCrackOnly : IGenCrackOnly
 {
     private readonly ILogger _log;
 
-    public GenCrackOnly()
-    {
-        _log = Log.ForContext<GenCrackOnly>();
-    }
-
     private readonly List<string> steamApiCheckBypassFileList = new()
     {
         "SteamAPICheckBypass.json",
@@ -71,6 +66,11 @@ public class GenCrackOnly : IGenCrackOnly
         "winmm.dll",
         "winhttp.dll"
     };
+
+    public GenCrackOnly()
+    {
+        _log = Log.ForContext<GenCrackOnly>();
+    }
 
     public async Task<bool> Applier(GenCrackOnlyConfig config)
     {
@@ -113,11 +113,13 @@ public class GenCrackOnly : IGenCrackOnly
                 var files = new List<string>();
                 var bypassfiles = new List<string>();
                 var folders = new List<string>();
-                foreach (var path in Directory.EnumerateFiles(config.SourcePath, "*.exe.bak", SearchOption.AllDirectories))
+                foreach (var path in Directory.EnumerateFiles(config.SourcePath, "*.exe.bak",
+                             SearchOption.AllDirectories))
                     files.Add(path);
 
 
-                foreach (var path in Directory.EnumerateFiles(config.SourcePath, "*.dll.bak", SearchOption.AllDirectories))
+                foreach (var path in Directory.EnumerateFiles(config.SourcePath, "*.dll.bak",
+                             SearchOption.AllDirectories))
                     files.Add(path);
 
                 foreach (var path in Directory.EnumerateDirectories(config.SourcePath, "steam_settings",
@@ -125,7 +127,8 @@ public class GenCrackOnly : IGenCrackOnly
 
                 foreach (var path in files)
                 {
-                    var origpath = Path.Combine(Path.GetDirectoryName(path) ?? string.Empty, Path.GetFileNameWithoutExtension(path));
+                    var origpath = Path.Combine(Path.GetDirectoryName(path) ?? string.Empty,
+                        Path.GetFileNameWithoutExtension(path));
                     if (!Directory.Exists(Path.Combine(config.OutputPath, "Crack",
                             Path.GetRelativePath(config.SourcePath, Path.GetDirectoryName(path) ?? string.Empty))))
                         Directory.CreateDirectory(Path.Combine(config.OutputPath, "Crack",
@@ -141,11 +144,9 @@ public class GenCrackOnly : IGenCrackOnly
                 }
 
                 foreach (var filename in steamApiCheckBypassFileList)
-                {
-                    foreach (var path in Directory.EnumerateFiles(config.SourcePath, filename, SearchOption.AllDirectories))
-                        bypassfiles.Add(path);
-                }
-                
+                foreach (var path in Directory.EnumerateFiles(config.SourcePath, filename, SearchOption.AllDirectories))
+                    bypassfiles.Add(path);
+
                 foreach (var path in bypassfiles)
                 {
                     if (!Directory.Exists(Path.Combine(config.OutputPath, "Crack",

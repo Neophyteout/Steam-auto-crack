@@ -21,7 +21,6 @@
     <ProjectReference Include="..\Steamless.API\Steamless.API.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
-    <PackageReference Include="System.IO.Packaging" Version="10.0.0" />
+    <PackageReference Include="System.IO.Packaging" Version="10.0.8" />
   </ItemGroup>
 </Project>

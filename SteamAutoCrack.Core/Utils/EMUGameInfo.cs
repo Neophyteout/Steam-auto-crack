@@ -572,7 +572,7 @@ internal abstract class Generator
 
                 _log.Debug("Saving stats...");
                 var statsList = new List<JsonObject>();
-                
+
                 foreach (var stat in statData.EnumerateArray())
                 {
                     cancellationToken.ThrowIfCancellationRequested();
@@ -591,7 +591,7 @@ internal abstract class Generator
                         ["default"] = defaultValue,
                         ["global"] = "0"
                     };
-                    
+
                     statsList.Add(statObject);
                 }
 
@@ -605,7 +605,7 @@ internal abstract class Generator
                             WriteIndented = true
                         });
                     File.WriteAllText(Path.Combine(ConfigPath, "stats.json"), statsJson);
-                    
+
                     var empty = statsList.Count == 1 ? "" : "s";
                     _log.Debug($"Successfully got {statsList.Count} stat{empty}.");
                 }
@@ -889,11 +889,14 @@ internal class GeneratorSteamClient : Generator
             if (vdfKeyValue is null) return new JsonObject();
 
             JsonObject rootJobj = new();
-            Queue<(KVObject kvPair, JsonObject myJobj)> pending = new([
-                (vdfKeyValue, rootJobj)
-            ]);
+            Queue<(string Name, KVObject KV, JsonObject Parent)> pending = new();
 
-            JsonNode? SingleVdfKvToJobj(KVValue val)
+            foreach (var child in vdfKeyValue.Children)
+            {
+                pending.Enqueue((child.Key, child.Value, rootJobj));
+            }
+
+            JsonNode? SingleVdfKvToJobj(KVObject val)
             {
                 switch (val.ValueType)
                 {
@@ -926,8 +929,7 @@ internal class GeneratorSteamClient : Generator
 
             while (pending.Count > 0)
             {
-                var (kv, currentObj) = pending.Dequeue();
-                var nameSafe = kv.Name is null ? string.Empty : kv.Name;
+                var (nameSafe, kv, currentObj) = pending.Dequeue();
                 if (!kv.Children.Any()) // regular "key" : "value"
                 {
                     if (currentObj.TryGetPropertyValue(nameSafe, out var oldVal)) // name exists
@@ -944,11 +946,11 @@ internal class GeneratorSteamClient : Generator
                              * ]
                              */
                             currentObj.Remove(nameSafe);
-                            currentObj[nameSafe] = new JsonArray(null, SingleVdfKvToJobj(kv.Value));
+                            currentObj[nameSafe] = new JsonArray(null, SingleVdfKvToJobj(kv));
                         }
                         else if (oldVal.GetValueKind() == JsonValueKind.Array) // previously converted
                         {
-                            oldVal.AsArray().Add(kv.Value);
+                            oldVal.AsArray().Add(SingleVdfKvToJobj(kv));
                         }
                         else // convert it to array
                         {
@@ -962,12 +964,12 @@ internal class GeneratorSteamClient : Generator
                              * ]
                              */
                             currentObj.Remove(nameSafe);
-                            currentObj[nameSafe] = new JsonArray(oldVal, SingleVdfKvToJobj(kv.Value));
+                            currentObj[nameSafe] = new JsonArray(oldVal, SingleVdfKvToJobj(kv));
                         }
                     }
                     else // new name
                     {
-                        currentObj[nameSafe] = SingleVdfKvToJobj(kv.Value);
+                        currentObj[nameSafe] = SingleVdfKvToJobj(kv);
                     }
                 }
                 else // nested object "key" : { ... }
@@ -1012,7 +1014,7 @@ internal class GeneratorSteamClient : Generator
                     // add all nested elements for the next iterations
                     foreach (var item in kv.Children)
                         // the owner of element will be this new json object
-                        pending.Enqueue((item, newObj));
+                        pending.Enqueue((item.Key, item.Value, newObj));
                 }
             }
 
@@ -1219,11 +1221,9 @@ internal class GeneratorSteamClient : Generator
 
         void SaveControllerVdfObj(JsonObject con)
         {
-            var controller_mappings = ToObjSafe(GetKeyIgnoreCase(con, "controller_mappings"));
-
-            var groups = ToVdfArraySafe(GetKeyIgnoreCase(controller_mappings, "group"));
-            var actions = ToVdfArraySafe(GetKeyIgnoreCase(controller_mappings, "actions"));
-            var presets = ToVdfArraySafe(GetKeyIgnoreCase(controller_mappings, "preset"));
+            var groups = ToVdfArraySafe(GetKeyIgnoreCase(con, "group"));
+            var actions = ToVdfArraySafe(GetKeyIgnoreCase(con, "actions"));
+            var presets = ToVdfArraySafe(GetKeyIgnoreCase(con, "preset"));
 
             // each group defines the controller key and its binding
             var groups_by_id = groups
@@ -1515,10 +1515,10 @@ internal class GeneratorSteamClient : Generator
             }
 
 
-            var supportedCons = GameInfoConfig["steamcontrollerconfigdetails"].Children.Where(
-                c => supported_controllers_types.Contains(c["controller_type"].Value)
-                     && c["enabled_branches"].Value!.Split(",")
-                         .Any(br => br.Equals("default", StringComparison.OrdinalIgnoreCase)));
+            var supportedCons = GameInfoConfig["steamcontrollerconfigdetails"].Children.Where(c =>
+                supported_controllers_types.Contains(c["controller_type"].Value)
+                && c["enabled_branches"].Value!.Split(",")
+                    .Any(br => br.Equals("default", StringComparison.OrdinalIgnoreCase)));
 
             cancellationToken.ThrowIfCancellationRequested();
 
@@ -1705,8 +1705,9 @@ internal class GeneratorSteamClient : Generator
                 if (GameInfoDLCs["listofdlc"].Value != null)
                 {
                     DLCIds.AddRange(
-                        new List<string>(GameInfoDLCs["listofdlc"].Value?.Split(',') ?? Array.Empty<string>()).ConvertAll(x =>
-                            Convert.ToUInt32(x)));
+                        new List<string>(GameInfoDLCs["listofdlc"].Value?.Split(',') ?? Array.Empty<string>())
+                            .ConvertAll(x =>
+                                Convert.ToUInt32(x)));
                 }
                 else
                 {
@@ -1880,7 +1881,7 @@ internal class GeneratorSteamClient : Generator
                 {
                     GenerateSupportedLang(cancellationToken), GenerateDepots(cancellationToken),
                     GenerateDLCs(cancellationToken), GenerateInventory(cancellationToken),
-                    GenerateControllerInfo()
+                    GenerateControllerInfo(cancellationToken)
                 };
                 while (Tasks1.Count > 0)
                 {

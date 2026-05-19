@@ -57,8 +57,8 @@ internal class Steam3Session
     private readonly CallbackManager callbacks;
 
     // input
-    readonly SteamUser.LogOnDetails logonDetails;
-    readonly SteamApps steamApps;
+    private readonly SteamUser.LogOnDetails logonDetails;
+    private readonly SteamApps steamApps;
 
     private readonly object steamLock = new();
     private readonly PublishedFile steamPublishedFile;

@@ -1,13 +1,13 @@
-﻿using Microsoft.Win32;
-using Serilog;
-using SteamAutoCrack.Core.Utils;
-using SteamAutoCrack.ViewModels;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
+using Microsoft.Win32;
+using Serilog;
+using SteamAutoCrack.Core.Utils;
+using SteamAutoCrack.ViewModels;
 
 namespace SteamAutoCrack.Views;
 
@@ -27,9 +27,10 @@ public partial class AppIDFinder : Window
     {
         InitializeComponent();
 #pragma warning disable WPF0001
-        var useLightTheme = Registry.GetValue("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+        var useLightTheme = Registry.GetValue(
+            "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
             "AppsUseLightTheme", true) as int?;
-        if (useLightTheme != null) ThemeMode = (useLightTheme == 1) ? ThemeMode.Light : ThemeMode.Dark;
+        if (useLightTheme != null) ThemeMode = useLightTheme == 1 ? ThemeMode.Light : ThemeMode.Dark;
         else ThemeMode = ThemeMode.Light;
         DataContext = viewModel;
         viewModel.AppName = appname;

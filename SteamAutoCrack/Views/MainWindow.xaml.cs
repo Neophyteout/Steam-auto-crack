@@ -35,32 +35,10 @@ public partial class MainWindow
     private readonly ILogger _log;
 
     private readonly MainWindowViewModel viewModel = new();
-    private bool bAboutOpened;
-    private bool bAppIDFinderOpened;
-
-    private bool bSettingsOpened;
-    private bool bStarted;
-    private CancellationTokenSource cts = new();
-
-    private enum UIState
-    {
-        Idle,
-        Processing,
-        ProcessingNoStop,
-        AnotherWindowOpened,
-    }
 
     private UIState _currentUIState = UIState.Idle;
-    private class UIStates
-    {
-        public bool _init { get; set; } = false; // Indicate if the UI state is initialized or not
-        public bool GenerateEMUGameInfo { get; set; } = true;
-        public bool GenerateEMUConfig { get; set; } = true;
-        public bool Unpack { get; set; } = true;
-        public bool ApplyEMU { get; set; } = true;
-        public bool GenerateCrackOnly { get; set; } = false;
-    }
-    private UIStates _prevuiStates = new()
+
+    private readonly UIStates _prevuiStates = new()
     {
         GenerateEMUGameInfo = true,
         GenerateEMUConfig = true,
@@ -69,8 +47,15 @@ public partial class MainWindow
         GenerateCrackOnly = false
     };
 
+    private bool bAboutOpened;
+    private bool bAppIDFinderOpened;
+
+    private bool bSettingsOpened;
+    private bool bStarted;
+    private CancellationTokenSource cts = new();
+
     /// <summary>
-    /// UI State Machine
+    ///     UI State Machine
     /// </summary>
     private void UpdateUIState(UIState newState, bool set_restore = false)
     {
@@ -113,8 +98,8 @@ public partial class MainWindow
                             viewModel.ApplyEMU = _prevuiStates.ApplyEMU;
                             viewModel.GenerateCrackOnly = _prevuiStates.GenerateCrackOnly;
                         }
-
                     }
+
                     _prevuiStates._init = true;
                     GenerateEMUGameInfo.IsEnabled = !viewModel.Restore;
                     GenerateEMUConfig.IsEnabled = !viewModel.Restore;
@@ -172,15 +157,34 @@ public partial class MainWindow
         });
     }
 
+    private enum UIState
+    {
+        Idle,
+        Processing,
+        ProcessingNoStop,
+        AnotherWindowOpened
+    }
+
+    private class UIStates
+    {
+        public bool _init { get; set; } // Indicate if the UI state is initialized or not
+        public bool GenerateEMUGameInfo { get; set; } = true;
+        public bool GenerateEMUConfig { get; set; } = true;
+        public bool Unpack { get; set; } = true;
+        public bool ApplyEMU { get; set; } = true;
+        public bool GenerateCrackOnly { get; set; }
+    }
+
     public MainWindow()
     {
         if (Config.SaveCrackConfig) Config.LoadConfig();
         Thread.CurrentThread.CurrentUICulture = CultureInfo.CreateSpecificCulture(Config.GetLanguage());
         InitializeComponent();
 #pragma warning disable WPF0001
-        var useLightTheme = Registry.GetValue("HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+        var useLightTheme = Registry.GetValue(
+            "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
             "AppsUseLightTheme", true) as int?;
-        if (useLightTheme != null) ThemeMode = (useLightTheme == 1) ? ThemeMode.Light : ThemeMode.Dark;
+        if (useLightTheme != null) ThemeMode = useLightTheme == 1 ? ThemeMode.Light : ThemeMode.Dark;
         else ThemeMode = ThemeMode.Light;
         if (Config.LogToFile)
             Log.Logger = new LoggerConfiguration()

@@ -504,19 +504,14 @@ internal class MainWindowViewModel : INotifyPropertyChanged
             if (value != currentValue)
             {
                 var parts = value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                var newList = new List<UInt64>();
+                var newList = new List<ulong>();
                 foreach (var part in parts)
-                {
-                    if (UInt64.TryParse(part.Trim(), out var num))
-                    {
+                    if (ulong.TryParse(part.Trim(), out var num))
                         newList.Add(num);
-                    }
                     else
-                    {
                         // Invalid input
                         return;
-                    }
-                }
+
                 Config.SteamStubUnpackerConfigs.SteamAPICheckBypassNthTime = newList;
                 NotifyPropertyChanged();
             }
